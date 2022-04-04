@@ -16,6 +16,8 @@ let blinkImg = [];
 let blinkImgPos = [];
 let blinkRot;
 let printImg;
+let imgb;
+let rotAni;
 function setup() {
 	const cv = createCanvas(1280, 1280);
 	cv.parent("cv");
@@ -42,6 +44,9 @@ function setup() {
 	translate(-width / 2, -height / 2);
 	rect(0, 0, width, height);
 	pop();
+
+	// Init rot Ani
+	rotAni = (int(random(8)) * HALF_PI) / 2;
 
 	// Blink rotation
 	blinkRot = (int(random(8)) * HALF_PI) / 2;
@@ -164,7 +169,7 @@ function setup() {
 	ishadow.addColorStop(0.9, color(0, 0));
 	ishadow.addColorStop(1, color(0, 200));
 	drawingContext.fillStyle = ishadow;
-	let imgb = get(ixp, iyp, iw, ih);
+	imgb = get(ixp, iyp, iw, ih);
 	translate(width / 2, height / 2);
 	scale(0.6);
 	translate(-width / 2, -height / 2);
@@ -196,6 +201,34 @@ function draw() {
 			image(blinkImg[i], blinkImgPos[i].x, blinkImgPos[i].y);
 		}
 	}
+	pop();
+
+	// Ani Slice
+	push();
+
+	translate(width / 2, height / 2);
+	rotate(rotAni);
+	translate(-width / 2, -height / 2);
+
+	// Inner shadow
+	let ixp = width / 2 - (width * 0.2) / 2;
+	let iyp = 0;
+	let iw = width * 0.2;
+	let ih = height;
+	let imgposy = sin(frameCount * 0.001) * 50;
+	fill(0);
+	let ishadow = drawingContext.createLinearGradient(ixp, iyp, ixp + iw, iyp);
+	ishadow.addColorStop(0, color(0, 200));
+	ishadow.addColorStop(0.1, color(0, 0));
+	ishadow.addColorStop(0.9, color(0, 0));
+	ishadow.addColorStop(1, color(0, 200));
+	drawingContext.fillStyle = ishadow;
+	imgb = get(ixp, iyp, iw, ih);
+	// translate(width / 2, height / 2);
+	// scale(0.6);
+	// translate(-width / 2, -height / 2);
+	image(imgb, ixp, iyp + imgposy);
+	rect(ixp, iyp - height, iw, ih + height * 2);
 	pop();
 }
 function cutCanvas() {
