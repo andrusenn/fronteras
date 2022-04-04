@@ -17,15 +17,14 @@ let blinkImgPos = [];
 let blinkRot;
 let printImg;
 function setup() {
-	const cv = createCanvas(1600, 1600);
+	const cv = createCanvas(1280, 1280);
 	cv.parent("cv");
 	cv.id("__");
 	cv.class("__");
 	pixelDensity(1);
 	randomSeed(seed);
 	noiseSeed(seed);
-	//
-	// noLoop();
+
 	// Background ---------------------------
 	noStroke();
 	let bgGradient = drawingContext.createLinearGradient(
@@ -37,15 +36,17 @@ function setup() {
 	bgGradient.addColorStop(0, color(50));
 	bgGradient.addColorStop(1, color(0));
 	drawingContext.fillStyle = bgGradient;
-	blinkRot = (int(random(8)) * HALF_PI) / 2;
 	push();
 	translate(width / 2, height / 2);
 	rotate(int(random(4)) * PI);
 	translate(-width / 2, -height / 2);
 	rect(0, 0, width, height);
 	pop();
-	// cutCanvas();
-	// background(0);
+
+	// Blink rotation
+	blinkRot = (int(random(8)) * HALF_PI) / 2;
+
+	// Number of vortices
 	numVort = int(random(2, 6));
 	for (let i = 0; i < numVort; i++) {
 		const v = createVector(
@@ -55,24 +56,32 @@ function setup() {
 		vectors.push(v);
 	}
 	push();
+
+	// Blink positions and frequency
 	for (let i = 0; i < 25; i++) {
 		blinkImgPos.push(
 			createVector(
 				random(300, width - 300),
 				random(300, height - 300),
+				// Blink frequency
 				int(random(20, 150)),
 			),
 		);
 	}
-	// Rotate
+
+	// Rotate result
 	rotateAll();
 
 	// Noise
 	stroke(255);
-	let vdist = map(numVort, 2, 6, 1200, 200);
-	for (let x = 150; x < width - 150; x += width / 600) {
-		for (let y = 150; y < height - 150; y += height / 600) {
-			let nz = 0.004;
+	let vdist = map(numVort, 2, 6, width * 2, 200);
+	for (let x = width * 0.2; x < width - width * 0.2; x += width / 400) {
+		for (
+			let y = height * 0.2;
+			y < height - height * 0.2;
+			y += height / 400
+		) {
+			let nz = 0.001;
 			let str = 255;
 			// check distances to vector (attractor)
 			let distances = [];
@@ -81,85 +90,107 @@ function setup() {
 				distances.push(d);
 			});
 			let minDist = Math.min.apply(null, distances);
-			nz = map(constrain(minDist, 0.0, vdist), 0, vdist, 0.00001, 0.01);
-			str = map(constrain(minDist, 0.0, vdist), 0, vdist, 255, 0);
+			nz = map(constrain(minDist, 0.0, vdist), 0, vdist, 0.0001, 0.008);
+			str = 255; //map(constrain(minDist, 0.0, vdist), 0, vdist, 255, 0);
 			let n = noise(x * nz, y * nz, x * 0.001);
 			let dx = cos(n * TAU) * 100;
 			let dy = sin(n * TAU) * 100;
 			strokeWeight(2);
 			if (int(y) % int(random(80, 150)) == 0) {
-				strokeWeight(6);
+				strokeWeight(3);
 			}
 			stroke(str);
 			point(x + dx, y + dy);
 		}
 	}
 
-	// Rotate
+	// Rotate result
 	rotateAll();
 
-	// Colors
-	colores(random(height / 2, height - 200));
+	// Color stripes
+	colores(random(height / 2, height - 200), random(5, 20), random(20, 150));
 
-	// Rotate
+	// Rotate result
 	rotateAll();
 
+	// Draw Vortices positions
 	for (let i = 0; i < numVort; i++) {
 		fill(255, 60);
 		noStroke();
 		circle(vectors[i].x, vectors[i].y, random(20, 100));
 	}
+
+	// Cut
 	cutCanvas();
-	// Noise
+
+	// Get blink images
+	for (let i = 0; i < blinkImgPos.length; i++) {
+		let img = get(
+			random(width),
+			random(height),
+			random(5, 20),
+			random(5, 20),
+		);
+		blinkImg.push(img);
+	}
+	// Cut scaled
 	push();
 	translate(width / 2, height / 2);
 	scale(0.5);
 	translate(-width / 2, -height / 2);
-	stroke(255);
-	vdist = map(numVort, 2, 6, 1200, 200);
-	for (let x = 150; x < width - 150; x += width / 300) {
-		for (let y = 150; y < height - 150; y += height / 300) {
-			let nz = 0.004;
-			let str = 255;
-			// check distances to vector (attractor)
-			let distances = [];
-			vectors.forEach((v) => {
-				let d = dist(v.x, v.y, x, y);
-				distances.push(d);
-			});
-			let minDist = Math.min.apply(null, distances);
-			nz = map(constrain(minDist, 0.0, vdist), 0, vdist, 0.00001, 0.01);
-			str = map(constrain(minDist, 0.0, vdist), 0, vdist, 255, 0);
-			let n = noise(x * nz, y * nz, x * 0.001);
-			let dx = cos(n * TAU) * 100;
-			let dy = sin(n * TAU) * 100;
-			strokeWeight(2);
-			if (int(y) % int(random(80, 150)) == 0) {
-				strokeWeight(6);
-			}
-			stroke(str);
-			point(x + dx, y + dy);
-		}
-	}
-	// Rotate
 	rotateAll();
 	cutCanvas();
 	pop();
+	push();
+	translate(width / 2, height / 2);
+	scale(0.25);
+	translate(-width / 2, 0);
+	rotateAll();
+	cutCanvas();
+	pop();
+
+	// Slice
+	push();
+	// Inner shadow
+	let ixp = width / 2 - (width * 0.2) / 2;
+	let iyp = 0;
+	let iw = width * 0.2;
+	let ih = height;
+	let imgposy = random(-800, 800);
+	fill(0);
+	let ishadow = drawingContext.createLinearGradient(ixp, iyp, ixp + iw, iyp);
+	ishadow.addColorStop(0, color(0, 200));
+	ishadow.addColorStop(0.1, color(0, 0));
+	ishadow.addColorStop(0.9, color(0, 0));
+	ishadow.addColorStop(1, color(0, 200));
+	drawingContext.fillStyle = ishadow;
+	let imgb = get(ixp, iyp, iw, ih);
+	translate(width / 2, height / 2);
+	scale(0.6);
+	translate(-width / 2, -height / 2);
+	image(imgb, ixp, iyp + imgposy);
+	rect(ixp, iyp - height, iw, ih + height * 2);
+	pop();
+
+	// Get result
 	printImg = get();
-	//
+
+	// Console
 	document.title = `Fronteras en abstracto | Andr\u00e9s Senn | 2022`;
 	console.log(
-		`%cFronteras en abstracto  | Andr\u00e9s Senn | Projet: `,
+		`%cFronteras en abstracto | Andr\u00e9s Senn | Projet: `,
 		"background:#333;border-radius:10px;background-size:15%;color:#eee;padding:10px;font-size:15px;text-align:center;",
 	);
 }
 function draw() {
+	// Show result
 	image(printImg, 0, 0);
+
+	// Blink images
 	push();
 	translate(width / 2, height / 2);
 	rotate(blinkRot);
 	translate(-width / 2, -height / 2);
-
 	for (let i = 0; i < blinkImg.length; i++) {
 		if (frameCount % blinkImgPos[i].z < blinkImgPos[i].z / 2) {
 			image(blinkImg[i], blinkImgPos[i].x, blinkImgPos[i].y);
@@ -168,8 +199,7 @@ function draw() {
 	pop();
 }
 function cutCanvas() {
-	let ci = 0;
-	for (let x = 0; x < width; x += random(20, 100)) {
+	for (let x = 200; x < width - 200; x += random(20, 100)) {
 		for (
 			let y = height / 2 + random(-200, 200);
 			y < height;
@@ -180,7 +210,7 @@ function cutCanvas() {
 				map(y, height / 2, height, 0, random(100, 200)),
 				0,
 			);
-			let img = get(x, y, 40, random(10, 60));
+			let img = get(x, y, 30, random(10, 60));
 			let ns = noise(x * 0.001, y * 0.001);
 			let disp = map(ns, 0, 1, -ddist, ddist);
 			// Shadow
@@ -189,21 +219,11 @@ function cutCanvas() {
 			rect(x + 5, y + disp + 5, img.width * 1.02, img.width * 1.02);
 			image(img, x, y + disp);
 
-			// Get blink images
-			if (ci % 5 == 0 && ci > 200 && ci < 300) {
-				if (blinkImg.length < blinkImgPos.length) {
-					blinkImg.push(img);
-				}
-			}
-			//
-
-			noFill();
-			stroke(0, 200);
-			rect(x + 5, y + disp + 5, img.width * 1.02, img.width * 1.02);
+			// noFill();
+			// stroke(0, 200);
+			// rect(x + 5, y + disp + 5, img.width * 1.02, img.width * 1.02);
 			stroke(255, 10);
 			line(x, y + disp, x, y + disp + 200);
-			//
-			ci++;
 		}
 	}
 }
@@ -213,14 +233,20 @@ function rotateAll() {
 	translate(-width / 2, -height / 2);
 }
 function keyReleased() {
-	// if (key == "p" || key == "P") {
-	// 	pause = !pause;
-	// 	if (pause) {
-	// 		noLoop();
-	// 	} else {
-	// 		loop();
-	// 	}
-	// }
+	switch (key) {
+		case "1":
+			pixelDensity(1);
+			break;
+		case "2":
+			pixelDensity(2);
+			break;
+		case "4":
+			pixelDensity(3);
+			break;
+		case "8":
+			pixelDensity(4);
+			break;
+	}
 	if (key == "s" || key == "S") {
 		grabImage();
 	}
@@ -248,27 +274,40 @@ function grabImage() {
 	);
 	saveCanvas("fea_" + date);
 }
-function colores(_y) {
+function colores(_y, _h = 20, _sh = 200) {
 	fill(0);
 	noStroke();
+	// Sahdow
 	let shadow = drawingContext.createLinearGradient(
 		-width,
 		_y - 50,
 		-width,
-		_y + 120 + 50,
+		_y + _sh + 50,
 	);
 	shadow.addColorStop(0, color(0, 0));
-	shadow.addColorStop(0.4, color(0));
-	shadow.addColorStop(0.6, color(0));
+	shadow.addColorStop(0.5, color(0));
 	shadow.addColorStop(1, color(0, 0));
 	drawingContext.fillStyle = shadow;
-	//
-	rect(-width, _y - 50, width * 3, 120 + 100);
-	//
-	for (let y = _y; y < 120 + _y; y += 8) {
+	rect(-width, _y - 50, width * 3, _sh + 100);
+
+	// Stripes
+	for (let y = _y; y < _sh + _y; y += _h) {
 		push();
-		fill(random(255), random(255), random(255));
-		rect(-width, y, width * 3, 8);
+		fill(0);
+		let rectFill = drawingContext.createLinearGradient(0, y, width, y);
+		rectFill.addColorStop(0, color(0, 0));
+		rectFill.addColorStop(
+			0.2,
+			color(random(255), random(255), random(255)),
+		);
+		rectFill.addColorStop(
+			0.8,
+			color(random(255), random(255), random(255)),
+		);
+		rectFill.addColorStop(1, color(0, 0));
+		drawingContext.fillStyle = rectFill;
+
+		rect(-width, y, width * 3, _h);
 		pop();
 	}
 }
