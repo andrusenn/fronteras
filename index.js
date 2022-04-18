@@ -6,9 +6,10 @@ Project:
 Andrés Senn - 2022
 
 */
-
-const hash = Math.random();
-const seed = hash * 10000000000;
+let overlay;
+let loaded = false;
+const rand = fxrand();
+const seed = rand * 10000000000;
 let particles = [];
 let vectors = [];
 let numVort = 0;
@@ -17,39 +18,57 @@ let blinkImgPos = [];
 let blinkRot;
 let printImg;
 let imgb;
-let rotAni;
+let rotAni, rotAniFeature;
+let imgposyvel;
+let cv;
+let conectedColors = 0;
 function setup() {
-	const cv = createCanvas(1280, 1280);
+	// setInterval(() => {
+	// 	location.reload();
+	// }, 20000);
+	overlay = document.querySelector(".overlay");
+	cv = createCanvas(1080, 1440);
 	cv.parent("cv");
-	cv.id("__");
-	cv.class("__");
-	pixelDensity(1);
+	cv.id("fea");
+	cv.class("fea");
+	dd = 2;
+	pixelDensity(2);
 	randomSeed(seed);
 	noiseSeed(seed);
-
+noLoop();
 	// Background ---------------------------
-	noStroke();
+	background(0, 0, 0, 0);
+	stroke("#444");
+	strokeWeight(2);
+	let rotCol = random(TWO_PI);
 	let bgGradient = drawingContext.createLinearGradient(
-		-200,
-		-200,
-		width,
-		height,
+		cos(rotCol),
+		sin(rotCol),
+		cos(rotCol) * width,
+		sin(rotCol) * height,
 	);
-	bgGradient.addColorStop(0, color(50));
-	bgGradient.addColorStop(1, color(0));
+	let dawn = random(random(20,255), 255);
+	bgGradient.addColorStop(0, color(random(0, 20)));
+	bgGradient.addColorStop(1, color(dawn));
 	drawingContext.fillStyle = bgGradient;
 	push();
 	translate(width / 2, height / 2);
 	rotate(int(random(4)) * PI);
 	translate(-width / 2, -height / 2);
-	rect(0, 0, width, height);
+	rect(0, 0, width, height, 10);
 	pop();
 
-	// Init rot Ani
-	rotAni = (int(random(8)) * HALF_PI) / 2;
+	noCursor();
 
+	// Init rot Ani
+	let idxRotAni = int(random(8));
+	rotAni = (idxRotAni * HALF_PI) / 2;
+	rotAniFeature = ["S", "SW", "W", "NW", "N", "NE", "E", "SE"];
 	// Blink rotation
 	blinkRot = (int(random(8)) * HALF_PI) / 2;
+
+	// Ani vel
+	imgposyvel = random(0.001, 0.004);
 
 	// Number of vortices
 	numVort = int(random(2, 6));
@@ -80,14 +99,14 @@ function setup() {
 	// Noise
 	stroke(255);
 	let vdist = map(numVort, 2, 6, width * 2, 200);
-	for (let x = width * 0.2; x < width - width * 0.2; x += width / 400) {
+	let cels = int(random(200, 500));
+	for (let x = width * 0.2; x < width - width * 0.2; x += width / cels) {
 		for (
 			let y = height * 0.2;
 			y < height - height * 0.2;
-			y += height / 400
+			y += height / cels
 		) {
 			let nz = 0.001;
-			let str = 255;
 			// check distances to vector (attractor)
 			let distances = [];
 			vectors.forEach((v) => {
@@ -95,14 +114,17 @@ function setup() {
 				distances.push(d);
 			});
 			let minDist = Math.min.apply(null, distances);
-			nz = map(constrain(minDist, 0.0, vdist), 0, vdist, 0.0001, 0.008);
-			str = 255; //map(constrain(minDist, 0.0, vdist), 0, vdist, 255, 0);
+			nz = map(constrain(minDist, 0.0, vdist), 0, vdist, 0.0003, 0.008);
 			let n = noise(x * nz, y * nz, x * 0.001);
 			let dx = cos(n * TAU) * 100;
 			let dy = sin(n * TAU) * 100;
-			strokeWeight(2);
+			strokeWeight(1.5);
 			if (int(y) % int(random(80, 150)) == 0) {
 				strokeWeight(3);
+			}
+			let str = 255;
+			if (brightness(get(x + dx, y + dy)) > 50) {
+				str = 0;
 			}
 			stroke(str);
 			point(x + dx, y + dy);
@@ -113,17 +135,21 @@ function setup() {
 	rotateAll();
 
 	// Color stripes
-	colores(random(height / 2, height - 200), random(5, 20), random(20, 150));
+	conectedColors = colorStripes(
+		random(height / 2, height - 200),
+		random(5, 10),
+		random(50, 200),
+	);
 
 	// Rotate result
 	rotateAll();
 
 	// Draw Vortices positions
-	for (let i = 0; i < numVort; i++) {
-		fill(255, 60);
-		noStroke();
-		circle(vectors[i].x, vectors[i].y, random(20, 100));
-	}
+	// for (let i = 0; i < numVort; i++) {
+	// 	fill(255, 60);
+	// 	noStroke();
+	// 	circle(vectors[i].x, vectors[i].y, random(20, 100));
+	// }
 
 	// Cut
 	cutCanvas();
@@ -138,41 +164,31 @@ function setup() {
 		);
 		blinkImg.push(img);
 	}
-	// Cut scaled
 	push();
-	translate(width / 2, height / 2);
-	scale(0.5);
-	translate(-width / 2, -height / 2);
 	rotateAll();
-	cutCanvas();
-	pop();
-	push();
-	translate(width / 2, height / 2);
-	scale(0.25);
-	translate(-width / 2, 0);
-	rotateAll();
-	cutCanvas();
 	pop();
 
-	// Slice
+	// Slice 1 -----------------------------------
 	push();
 	// Inner shadow
-	let ixp = width / 2 - (width * 0.2) / 2;
+	let ixp = width / 2 - (width * 0.1) / 2;
 	let iyp = 0;
-	let iw = width * 0.2;
+	let iw = width * 0.1;
 	let ih = height;
 	let imgposy = random(-800, 800);
 	fill(0);
 	let ishadow = drawingContext.createLinearGradient(ixp, iyp, ixp + iw, iyp);
-	ishadow.addColorStop(0, color(0, 200));
+	ishadow.addColorStop(0, color(0, 100));
+	ishadow.addColorStop(0.05, color(0, 20));
 	ishadow.addColorStop(0.1, color(0, 0));
 	ishadow.addColorStop(0.9, color(0, 0));
-	ishadow.addColorStop(1, color(0, 200));
+	ishadow.addColorStop(0.95, color(0, 20));
+	ishadow.addColorStop(1, color(0, 100));
 	drawingContext.fillStyle = ishadow;
 	imgb = get(ixp, iyp, iw, ih);
-	translate(width / 2, height / 2);
-	scale(0.6);
-	translate(-width / 2, -height / 2);
+	// translate(width / 2, height / 2);
+	// scale(0.6);
+	// translate(-width / 2, -height / 2);
 	image(imgb, ixp, iyp + imgposy);
 	rect(ixp, iyp - height, iw, ih + height * 2);
 	pop();
@@ -180,6 +196,15 @@ function setup() {
 	// Get result
 	printImg = get();
 
+	// Features
+	window.$fxhashFeatures = {
+		Abstraction: int(rand * 100) + "%",
+		"Border direction": rotAniFeature[idxRotAni],
+		"Border stability": int(map(imgposyvel, 0.001, 0.004, 1, 100)) + "%",
+		Dawn: int(map(dawn, 20, 255, 0, 100)) + "%",
+		"Connected border points": conectedColors,
+	};
+	console.log(window.$fxhashFeatures);
 	// Console
 	document.title = `Fronteras en abstracto | Andr\u00e9s Senn | 2022`;
 	console.log(
@@ -209,54 +234,85 @@ function draw() {
 	translate(width / 2, height / 2);
 	rotate(rotAni);
 	translate(-width / 2, -height / 2);
-
-	// Inner shadow
+	noStroke();
 	let ixp = width / 2 - (width * 0.2) / 2;
 	let iyp = 0;
 	let iw = width * 0.2;
 	let ih = height;
-	let imgposy = sin(frameCount * 0.001) * 50;
+	let imgposy = sin(frameCount * imgposyvel) * 50;
 	fill(0);
+	imgb = get(ixp, iyp, iw, ih);
+	// shadow
+	let oshadow = drawingContext.createLinearGradient(
+		ixp,
+		iyp - 20 + imgposy,
+		ixp,
+		iyp + ih + 20 + imgposy,
+	);
+	oshadow.addColorStop(0, color(0, 0));
+	oshadow.addColorStop(0.05, color(0, 20));
+	oshadow.addColorStop(0.1, color(0, 100));
+	oshadow.addColorStop(0.9, color(0, 100));
+	oshadow.addColorStop(0.95, color(0, 20));
+	oshadow.addColorStop(1, color(0, 0));
+	drawingContext.fillStyle = oshadow;
+	rect(ixp, iyp - 20 + imgposy, iw, ih + 40);
+	// ------
+	image(imgb, ixp, iyp + imgposy);
+
+	// Inner shadow
 	let ishadow = drawingContext.createLinearGradient(ixp, iyp, ixp + iw, iyp);
-	ishadow.addColorStop(0, color(0, 200));
+	ishadow.addColorStop(0, color(0, 100));
+	ishadow.addColorStop(0.05, color(0, 20));
 	ishadow.addColorStop(0.1, color(0, 0));
 	ishadow.addColorStop(0.9, color(0, 0));
-	ishadow.addColorStop(1, color(0, 200));
+	ishadow.addColorStop(0.95, color(0, 20));
+	ishadow.addColorStop(1, color(0, 100));
 	drawingContext.fillStyle = ishadow;
-	imgb = get(ixp, iyp, iw, ih);
-	// translate(width / 2, height / 2);
-	// scale(0.6);
-	// translate(-width / 2, -height / 2);
-	image(imgb, ixp, iyp + imgposy);
 	rect(ixp, iyp - height, iw, ih + height * 2);
+	// --------------
 	pop();
+
+	if (!loaded) {
+		overlay.style.display = "none";
+		loaded = true;
+		fxpreview();
+		loop();
+		//setTimeout(function () {
+		//}, 1000);
+	}
+	///
 }
 function cutCanvas() {
-	for (let x = 200; x < width - 200; x += random(20, 100)) {
+	for (let x = 200; x < width - 200; x += random(15, 40)) {
 		for (
 			let y = height / 2 + random(-200, 200);
 			y < height;
-			y += random(20, 100)
+			y += random(15, 40)
 		) {
 			//Cut
-			let ddist = round(
-				map(y, height / 2, height, 0, random(100, 200)),
+			let ddisty = round(
+				map(y, height / 2, height, 0, random(50, 100)),
 				0,
 			);
-			let img = get(x, y, 30, random(10, 60));
+			let ddistx = round(map(y, height / 2, height, 0, random(5, 20)), 0);
+			let img = get(x, y, 30, random(15, 40));
 			let ns = noise(x * 0.001, y * 0.001);
-			let disp = map(ns, 0, 1, -ddist, ddist);
+			let dispy = map(ns, 0, 1, -ddisty, ddisty);
+			let dispx = map(ns, 0, 1, -ddistx, ddistx);
 			// Shadow
 			noStroke();
-			fill(0, 100);
-			rect(x + 5, y + disp + 5, img.width * 1.02, img.width * 1.02);
-			image(img, x, y + disp);
+			fill(0, 60);
+			rect(
+				x + dispx + 5,
+				y + dispy + 5,
+				img.width,
+				img.width,
+			);
+			image(img, x + dispx, y + dispy);
 
-			// noFill();
-			// stroke(0, 200);
-			// rect(x + 5, y + disp + 5, img.width * 1.02, img.width * 1.02);
-			stroke(255, 10);
-			line(x, y + disp, x, y + disp + 200);
+			stroke(255, random(10,40));
+			line(x + dispx, y + dispy, x + dispx, y + dispy + 200);
 		}
 	}
 }
@@ -273,10 +329,10 @@ function keyReleased() {
 		case "2":
 			pixelDensity(2);
 			break;
-		case "4":
+		case "3":
 			pixelDensity(3);
 			break;
-		case "8":
+		case "4":
 			pixelDensity(4);
 			break;
 	}
@@ -307,7 +363,7 @@ function grabImage() {
 	);
 	saveCanvas("fea_" + date);
 }
-function colores(_y, _h = 20, _sh = 200) {
+function colorStripes(_y, _h = 20, _sh = 200) {
 	fill(0);
 	noStroke();
 	// Sahdow
@@ -318,29 +374,32 @@ function colores(_y, _h = 20, _sh = 200) {
 		_y + _sh + 50,
 	);
 	shadow.addColorStop(0, color(0, 0));
-	shadow.addColorStop(0.5, color(0));
+	shadow.addColorStop(0.4, color(0, 20));
+	shadow.addColorStop(0.5, color(0, 100));
+	shadow.addColorStop(0.6, color(0, 20));
 	shadow.addColorStop(1, color(0, 0));
 	drawingContext.fillStyle = shadow;
 	rect(-width, _y - 50, width * 3, _sh + 100);
 
 	// Stripes
+	let nums = 0;
 	for (let y = _y; y < _sh + _y; y += _h) {
 		push();
 		fill(0);
 		let rectFill = drawingContext.createLinearGradient(0, y, width, y);
 		rectFill.addColorStop(0, color(0, 0));
-		rectFill.addColorStop(
-			0.2,
-			color(random(255), random(255), random(255)),
-		);
-		rectFill.addColorStop(
-			0.8,
-			color(random(255), random(255), random(255)),
-		);
+		let from = color(random(255), random(255), random(255));
+		let to = color(random(255));
+		rectFill.addColorStop(0.2, from);
+		rectFill.addColorStop(0.6, from);
+
+		rectFill.addColorStop(0.7, to);
 		rectFill.addColorStop(1, color(0, 0));
 		drawingContext.fillStyle = rectFill;
 
 		rect(-width, y, width * 3, _h);
 		pop();
+		nums++;
 	}
+	return nums;
 }
