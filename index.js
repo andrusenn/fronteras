@@ -17,15 +17,11 @@ let blinkImg = [];
 let blinkImgPos = [];
 let blinkRot;
 let printImg;
-let imgb;
 let rotAni, rotAniFeature;
 let imgposyvel;
 let cv;
 let conectedColors = 0;
 function setup() {
-	// setInterval(() => {
-	// 	location.reload();
-	// }, 20000);
 	overlay = document.querySelector(".overlay");
 	cv = createCanvas(1080, 1440);
 	cv.parent("cv");
@@ -35,19 +31,19 @@ function setup() {
 	pixelDensity(2);
 	randomSeed(seed);
 	noiseSeed(seed);
-noLoop();
+	noLoop();
+
 	// Background ---------------------------
 	background(0, 0, 0, 0);
 	stroke("#444");
 	strokeWeight(2);
-	let rotCol = random(TWO_PI);
 	let bgGradient = drawingContext.createLinearGradient(
-		cos(rotCol),
-		sin(rotCol),
-		cos(rotCol) * width,
-		sin(rotCol) * height,
+		0,
+		random(height),
+		width,
+		random(height),
 	);
-	let dawn = random(random(20,255), 255);
+	let dawn = random(0, 255);
 	bgGradient.addColorStop(0, color(random(0, 20)));
 	bgGradient.addColorStop(1, color(dawn));
 	drawingContext.fillStyle = bgGradient;
@@ -97,8 +93,161 @@ noLoop();
 	rotateAll();
 
 	// Noise
+	bgNoise(vectors);
+
+	// Rotate result
+	rotateAll();
+
+	// Color stripes
+	conectedColors = colorStripes(
+		random(height / 2, height - 200),
+		random(5, 10),
+		random(50, 200),
+	);
+
+	// Rotate result
+	rotateAll();
+
+	// Cut
+	cutCanvas();
+
+	// Get blink images
+	for (let i = 0; i < blinkImgPos.length; i++) {
+		let img = get(
+			random(width),
+			random(height),
+			random(5, 20),
+			random(5, 20),
+		);
+		blinkImg.push(img);
+	}
+	push();
+	rotateAll();
+	pop();
+
+	// Slice -----------------------------------
+	slice();
+
+	// Get result ------------------------------
+	printImg = get();
+
+	// Features --------------------------------
+	window.$fxhashFeatures = {
+		Abstraction: int(rand * 100) + "%",
+		"Border direction": rotAniFeature[idxRotAni],
+		"Border stability": int(map(imgposyvel, 0.001, 0.004, 1, 100)) + "%",
+		Dawn: int(map(dawn, 0, 255, 0, 100)) + "%",
+		"Connected border points": conectedColors,
+	};
+	
+	// Console
+	document.title = `Fronteras en abstracto | Andr\u00e9s Senn | 2022`;
+	console.log(
+		`%cFronteras en abstracto | Andr\u00e9s Senn | Projet: https://github.com/andrusenn/fronteras`,
+		"background:#333;border-radius:10px;background-size:15%;color:#eee;padding:10px;font-size:15px;text-align:center;",
+	);
+}
+function draw() {
+	// Show result -------------------------
+	image(printImg, 0, 0);
+
+	// Blink images ------------------------
+	push();
+	translate(width / 2, height / 2);
+	rotate(blinkRot);
+	translate(-width / 2, -height / 2);
+	for (let i = 0; i < blinkImg.length; i++) {
+		if (frameCount % blinkImgPos[i].z < blinkImgPos[i].z / 2) {
+			image(blinkImg[i], blinkImgPos[i].x, blinkImgPos[i].y);
+		}
+	}
+	pop();
+
+	// Ani Slice ---------------------------
+	push();
+
+	translate(width / 2, height / 2);
+	rotate(rotAni);
+	translate(-width / 2, -height / 2);
+	translate(-200, 0);
+	noStroke();
+	let ixp = width / 2 - (width * 0.2) / 2;
+	let iyp = 0;
+	let iw = width * 0.2;
+	let ih = height;
+	let imgposy = sin(frameCount * imgposyvel) * 50;
+	fill(0);
+	let imgb = get(ixp, iyp, iw, ih);
+	// shadow
+	let oshadow = drawingContext.createLinearGradient(
+		ixp,
+		iyp - 20 + imgposy,
+		ixp,
+		iyp + ih + 20 + imgposy,
+	);
+	oshadow.addColorStop(0, color(0, 0));
+	oshadow.addColorStop(0.05, color(0, 20));
+	oshadow.addColorStop(0.1, color(0, 100));
+	oshadow.addColorStop(0.9, color(0, 100));
+	oshadow.addColorStop(0.95, color(0, 20));
+	oshadow.addColorStop(1, color(0, 0));
+	drawingContext.fillStyle = oshadow;
+	rect(ixp, iyp - 20 + imgposy, iw, ih + 40);
+	// ------
+	image(imgb, ixp, iyp + imgposy);
+
+	// Inner shadow -------------------
+	let ishadow = drawingContext.createLinearGradient(ixp, iyp, ixp + iw, iyp);
+	ishadow.addColorStop(0, color(0, 100));
+	ishadow.addColorStop(0.05, color(0, 20));
+	ishadow.addColorStop(0.1, color(0, 0));
+	ishadow.addColorStop(0.9, color(0, 0));
+	ishadow.addColorStop(0.95, color(0, 20));
+	ishadow.addColorStop(1, color(0, 100));
+	drawingContext.fillStyle = ishadow;
+	rect(ixp, iyp - height, iw, ih + height * 2);
+	// -------------- ------------------
+	pop();
+
+	// Preview -------------------------
+	if (!loaded) {
+		overlay.style.display = "none";
+		loaded = true;
+		setTimeout(function () {
+			fxpreview();
+			loop();
+		}, 1000);
+	}
+}
+function slice(){
+	push();
+	// Inner shadow
+	let ixp = width / 2 - (width * 0.1) / 2;
+	let iyp = 0;
+	let iw = width * 0.1;
+	let ih = height;
+	let imgposy = random(-800, 800);
+	fill(0);
+	let ishadow = drawingContext.createLinearGradient(ixp, iyp, ixp + iw, iyp);
+	ishadow.addColorStop(0, color(0, 100));
+	ishadow.addColorStop(0.05, color(0, 20));
+	ishadow.addColorStop(0.1, color(0, 0));
+	ishadow.addColorStop(0.9, color(0, 0));
+	ishadow.addColorStop(0.95, color(0, 20));
+	ishadow.addColorStop(1, color(0, 100));
+	drawingContext.fillStyle = ishadow;
+	let imgb = get(ixp, iyp, iw, ih);
+	// translate(width / 2, height / 2);
+	// scale(0.6);
+	// translate(-width / 2, -height / 2);
+	image(imgb, ixp, iyp + imgposy);
+	rect(ixp, iyp - height, iw, ih + height * 2);
+	pop();
+}
+function bgNoise(vects){
+	// Noise
 	stroke(255);
-	let vdist = map(numVort, 2, 6, width * 2, 200);
+	let vdist = map(vects.length, 2, 6, width * 2, 200);
 	let cels = int(random(200, 500));
 	for (let x = width * 0.2; x < width - width * 0.2; x += width / cels) {
 		for (
@@ -109,7 +258,7 @@ noLoop();
 			let nz = 0.001;
 			// check distances to vector (attractor)
 			let distances = [];
-			vectors.forEach((v) => {
+			vects.forEach((v) => {
 				let d = dist(v.x, v.y, x, y);
 				distances.push(d);
 			});
@@ -131,157 +280,13 @@ noLoop();
 		}
 	}
 
-	// Rotate result
-	rotateAll();
-
-	// Color stripes
-	conectedColors = colorStripes(
-		random(height / 2, height - 200),
-		random(5, 10),
-		random(50, 200),
-	);
-
-	// Rotate result
-	rotateAll();
-
 	// Draw Vortices positions
-	// for (let i = 0; i < numVort; i++) {
-	// 	fill(255, 60);
-	// 	noStroke();
-	// 	circle(vectors[i].x, vectors[i].y, random(20, 100));
-	// }
-
-	// Cut
-	cutCanvas();
-
-	// Get blink images
-	for (let i = 0; i < blinkImgPos.length; i++) {
-		let img = get(
-			random(width),
-			random(height),
-			random(5, 20),
-			random(5, 20),
-		);
-		blinkImg.push(img);
+	for (let i = 0; i < vects.length; i++) {
+		fill(255, 60);
+		noStroke();
+		circle(vects[i].x, vects[i].y, random(20, 100));
 	}
-	push();
-	rotateAll();
-	pop();
 
-	// Slice 1 -----------------------------------
-	push();
-	// Inner shadow
-	let ixp = width / 2 - (width * 0.1) / 2;
-	let iyp = 0;
-	let iw = width * 0.1;
-	let ih = height;
-	let imgposy = random(-800, 800);
-	fill(0);
-	let ishadow = drawingContext.createLinearGradient(ixp, iyp, ixp + iw, iyp);
-	ishadow.addColorStop(0, color(0, 100));
-	ishadow.addColorStop(0.05, color(0, 20));
-	ishadow.addColorStop(0.1, color(0, 0));
-	ishadow.addColorStop(0.9, color(0, 0));
-	ishadow.addColorStop(0.95, color(0, 20));
-	ishadow.addColorStop(1, color(0, 100));
-	drawingContext.fillStyle = ishadow;
-	imgb = get(ixp, iyp, iw, ih);
-	// translate(width / 2, height / 2);
-	// scale(0.6);
-	// translate(-width / 2, -height / 2);
-	image(imgb, ixp, iyp + imgposy);
-	rect(ixp, iyp - height, iw, ih + height * 2);
-	pop();
-
-	// Get result
-	printImg = get();
-
-	// Features
-	window.$fxhashFeatures = {
-		Abstraction: int(rand * 100) + "%",
-		"Border direction": rotAniFeature[idxRotAni],
-		"Border stability": int(map(imgposyvel, 0.001, 0.004, 1, 100)) + "%",
-		Dawn: int(map(dawn, 20, 255, 0, 100)) + "%",
-		"Connected border points": conectedColors,
-	};
-	console.log(window.$fxhashFeatures);
-	// Console
-	document.title = `Fronteras en abstracto | Andr\u00e9s Senn | 2022`;
-	console.log(
-		`%cFronteras en abstracto | Andr\u00e9s Senn | Projet: `,
-		"background:#333;border-radius:10px;background-size:15%;color:#eee;padding:10px;font-size:15px;text-align:center;",
-	);
-}
-function draw() {
-	// Show result
-	image(printImg, 0, 0);
-
-	// Blink images
-	push();
-	translate(width / 2, height / 2);
-	rotate(blinkRot);
-	translate(-width / 2, -height / 2);
-	for (let i = 0; i < blinkImg.length; i++) {
-		if (frameCount % blinkImgPos[i].z < blinkImgPos[i].z / 2) {
-			image(blinkImg[i], blinkImgPos[i].x, blinkImgPos[i].y);
-		}
-	}
-	pop();
-
-	// Ani Slice
-	push();
-
-	translate(width / 2, height / 2);
-	rotate(rotAni);
-	translate(-width / 2, -height / 2);
-	noStroke();
-	let ixp = width / 2 - (width * 0.2) / 2;
-	let iyp = 0;
-	let iw = width * 0.2;
-	let ih = height;
-	let imgposy = sin(frameCount * imgposyvel) * 50;
-	fill(0);
-	imgb = get(ixp, iyp, iw, ih);
-	// shadow
-	let oshadow = drawingContext.createLinearGradient(
-		ixp,
-		iyp - 20 + imgposy,
-		ixp,
-		iyp + ih + 20 + imgposy,
-	);
-	oshadow.addColorStop(0, color(0, 0));
-	oshadow.addColorStop(0.05, color(0, 20));
-	oshadow.addColorStop(0.1, color(0, 100));
-	oshadow.addColorStop(0.9, color(0, 100));
-	oshadow.addColorStop(0.95, color(0, 20));
-	oshadow.addColorStop(1, color(0, 0));
-	drawingContext.fillStyle = oshadow;
-	rect(ixp, iyp - 20 + imgposy, iw, ih + 40);
-	// ------
-	image(imgb, ixp, iyp + imgposy);
-
-	// Inner shadow
-	let ishadow = drawingContext.createLinearGradient(ixp, iyp, ixp + iw, iyp);
-	ishadow.addColorStop(0, color(0, 100));
-	ishadow.addColorStop(0.05, color(0, 20));
-	ishadow.addColorStop(0.1, color(0, 0));
-	ishadow.addColorStop(0.9, color(0, 0));
-	ishadow.addColorStop(0.95, color(0, 20));
-	ishadow.addColorStop(1, color(0, 100));
-	drawingContext.fillStyle = ishadow;
-	rect(ixp, iyp - height, iw, ih + height * 2);
-	// --------------
-	pop();
-
-	if (!loaded) {
-		overlay.style.display = "none";
-		loaded = true;
-		fxpreview();
-		loop();
-		//setTimeout(function () {
-		//}, 1000);
-	}
-	///
 }
 function cutCanvas() {
 	for (let x = 200; x < width - 200; x += random(15, 40)) {
@@ -303,15 +308,14 @@ function cutCanvas() {
 			// Shadow
 			noStroke();
 			fill(0, 60);
-			rect(
-				x + dispx + 5,
-				y + dispy + 5,
-				img.width,
-				img.width,
-			);
+			rect(x + dispx + 5, y + dispy + 5, img.width, img.width);
 			image(img, x + dispx, y + dispy);
+			// Frame
+			noFill();
+			stroke(random(255), random(10, 80));
+			rect(x + dispx, y + dispy, img.width, img.width);
 
-			stroke(255, random(10,40));
+			stroke(255, random(10, 40));
 			line(x + dispx, y + dispy, x + dispx, y + dispy + 200);
 		}
 	}
