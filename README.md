@@ -14,10 +14,6 @@ Es solo un juego de palabras y frases a las cuales hay que darles sentido, y lo 
 
 // 
 
-<img src="https://github.com/andrusenn/fronteras/blob/master/images/fea_01.jpg?raw=true" width="200">
-<img src="https://github.com/andrusenn/fronteras/blob/master/images/fea_02.jpg?raw=true" width="200">
-<img src="https://github.com/andrusenn/fronteras/blob/master/images/fea_03.jpg?raw=true" width="200">
-<img src="https://github.com/andrusenn/fronteras/blob/master/images/fea_04.jpg?raw=true" width="200">
-<img src="https://github.com/andrusenn/fronteras/blob/master/images/fea_05.jpg?raw=true" width="200">
+<img src="https://github.com/andrusenn/fronteras/blob/master/images/fea_01.jpg?raw=true" width="200"> <img src="https://github.com/andrusenn/fronteras/blob/master/images/fea_02.jpg?raw=true" width="200"> <img src="https://github.com/andrusenn/fronteras/blob/master/images/fea_03.jpg?raw=true" width="200"> <img src="https://github.com/andrusenn/fronteras/blob/master/images/fea_04.jpg?raw=true" width="200"> <img src="https://github.com/andrusenn/fronteras/blob/master/images/fea_05.jpg?raw=true" width="200">
 
 
