@@ -17,7 +17,7 @@ let blinkImg = [];
 let blinkImgPos = [];
 let blinkRot;
 let printImg;
-let rotAni, rotAniFeature;
+let rotAni, rotAniFeature, disAni;
 let imgposyvel;
 let cv;
 let conectedColors = 0;
@@ -27,7 +27,7 @@ function setup() {
 	cv.parent("cv");
 	cv.id("fea");
 	cv.class("fea");
-	dd = 2;
+
 	pixelDensity(2);
 	randomSeed(seed);
 	noiseSeed(seed);
@@ -35,8 +35,7 @@ function setup() {
 
 	// Background ---------------------------
 	background(0, 0, 0, 0);
-	stroke("#444");
-	strokeWeight(2);
+	noStroke();
 	let bgGradient = drawingContext.createLinearGradient(
 		0,
 		random(height),
@@ -57,7 +56,8 @@ function setup() {
 	noCursor();
 
 	// Init rot Ani
-	let idxRotAni = int(random(8));
+	disAni = floor(random(800 / 200) + 1) * 200 - 400;
+	let idxRotAni = int(random(16));
 	rotAni = (idxRotAni * HALF_PI) / 2;
 	rotAniFeature = ["S", "SW", "W", "NW", "N", "NE", "E", "SE"];
 	// Blink rotation
@@ -126,7 +126,12 @@ function setup() {
 	pop();
 
 	// Slice -----------------------------------
+	// 1
 	slice();
+	if (random(1) > 0.5) {
+		// 2
+		slice();
+	}
 
 	// Get result ------------------------------
 	printImg = get();
@@ -139,7 +144,7 @@ function setup() {
 		Dawn: int(map(dawn, 0, 255, 0, 100)) + "%",
 		"Connected border points": conectedColors,
 	};
-	
+
 	// Console
 	document.title = `Fronteras en abstracto | Andr\u00e9s Senn | 2022`;
 	console.log(
@@ -169,7 +174,7 @@ function draw() {
 	translate(width / 2, height / 2);
 	rotate(rotAni);
 	translate(-width / 2, -height / 2);
-	translate(-200, 0);
+	translate(disAni, 0);
 	noStroke();
 	let ixp = width / 2 - (width * 0.2) / 2;
 	let iyp = 0;
@@ -183,16 +188,15 @@ function draw() {
 		ixp,
 		iyp - 20 + imgposy,
 		ixp,
-		iyp + ih + 20 + imgposy,
+		iyp + imgb.height + 40 + imgposy,
 	);
 	oshadow.addColorStop(0, color(0, 0));
-	oshadow.addColorStop(0.05, color(0, 20));
-	oshadow.addColorStop(0.1, color(0, 100));
-	oshadow.addColorStop(0.9, color(0, 100));
-	oshadow.addColorStop(0.95, color(0, 20));
+	oshadow.addColorStop(0.01, color(0, 100));
+	oshadow.addColorStop(0.5, color(0));
+	oshadow.addColorStop(0.99, color(0, 100));
 	oshadow.addColorStop(1, color(0, 0));
 	drawingContext.fillStyle = oshadow;
-	rect(ixp, iyp - 20 + imgposy, iw, ih + 40);
+	rect(ixp, iyp - 20 + imgposy, imgb.width, imgb.height + 40);
 	// ------
 	image(imgb, ixp, iyp + imgposy);
 
@@ -219,7 +223,9 @@ function draw() {
 		}, 1000);
 	}
 }
-function slice(){
+function slice() {
+	const rotIdx = int(random(8));
+	const rot = (rotIdx * HALF_PI) / 2;
 	push();
 	// Inner shadow
 	let ixp = width / 2 - (width * 0.1) / 2;
@@ -237,18 +243,18 @@ function slice(){
 	ishadow.addColorStop(1, color(0, 100));
 	drawingContext.fillStyle = ishadow;
 	let imgb = get(ixp, iyp, iw, ih);
-	// translate(width / 2, height / 2);
-	// scale(0.6);
-	// translate(-width / 2, -height / 2);
+	translate(width / 2, height / 2);
+	rotate(rot);
+	translate(-width / 2, -height / 2);
 	image(imgb, ixp, iyp + imgposy);
 	rect(ixp, iyp - height, iw, ih + height * 2);
 	pop();
 }
-function bgNoise(vects){
+function bgNoise(vects) {
 	// Noise
 	stroke(255);
-	let vdist = map(vects.length, 2, 6, width * 2, 200);
-	let cels = int(random(200, 500));
+	const vdist = map(vects.length, 2, 6, width * 2, 200);
+	const cels = int(random(200, 500));
 	for (let x = width * 0.2; x < width - width * 0.2; x += width / cels) {
 		for (
 			let y = height * 0.2;
@@ -262,11 +268,11 @@ function bgNoise(vects){
 				let d = dist(v.x, v.y, x, y);
 				distances.push(d);
 			});
-			let minDist = Math.min.apply(null, distances);
+			const minDist = Math.min.apply(null, distances);
 			nz = map(constrain(minDist, 0.0, vdist), 0, vdist, 0.0003, 0.008);
-			let n = noise(x * nz, y * nz, x * 0.001);
-			let dx = cos(n * TAU) * 100;
-			let dy = sin(n * TAU) * 100;
+			const n = noise(x * nz, y * nz, x * 0.001);
+			const dx = cos(n * TAU) * 100;
+			const dy = sin(n * TAU) * 100;
 			strokeWeight(1.5);
 			if (int(y) % int(random(80, 150)) == 0) {
 				strokeWeight(3);
@@ -286,7 +292,6 @@ function bgNoise(vects){
 		noStroke();
 		circle(vects[i].x, vects[i].y, random(20, 100));
 	}
-
 }
 function cutCanvas() {
 	for (let x = 200; x < width - 200; x += random(15, 40)) {
@@ -300,11 +305,14 @@ function cutCanvas() {
 				map(y, height / 2, height, 0, random(50, 100)),
 				0,
 			);
-			let ddistx = round(map(y, height / 2, height, 0, random(5, 20)), 0);
-			let img = get(x, y, 30, random(15, 40));
-			let ns = noise(x * 0.001, y * 0.001);
-			let dispy = map(ns, 0, 1, -ddisty, ddisty);
-			let dispx = map(ns, 0, 1, -ddistx, ddistx);
+			const ddistx = round(
+				map(y, height / 2, height, 0, random(5, 20)),
+				0,
+			);
+			const img = get(x, y, 30, random(15, 40));
+			const ns = noise(x * 0.001, y * 0.001);
+			const dispy = map(ns, 0, 1, -ddisty, ddisty);
+			const dispx = map(ns, 0, 1, -ddistx, ddistx);
 			// Shadow
 			noStroke();
 			fill(0, 60);
