@@ -2,8 +2,7 @@
 
 Fronteras en abstracto // Borders in abstract
 
-Project: 
-Andrés Senn - 2022
+Andrés Senn - April / 2022 - fxhash.xyz/u/andrusenn
 
 */
 let overlay;
@@ -43,7 +42,14 @@ function setup() {
 		random(height),
 	);
 	let dawn = random(0, 255);
-	bgGradient.addColorStop(0, color(random(0, 20)));
+	let oposite = random(0, 20);
+
+	console.log(dawn);
+	// Rare?
+	if (dawn > 240) {
+		oposite = random(200, 255);
+	}
+	bgGradient.addColorStop(0, color(oposite));
 	bgGradient.addColorStop(1, color(dawn));
 	drawingContext.fillStyle = bgGradient;
 	push();
@@ -60,11 +66,12 @@ function setup() {
 	let idxRotAni = int(random(16));
 	rotAni = (idxRotAni * HALF_PI) / 2;
 	rotAniFeature = ["S", "SW", "W", "NW", "N", "NE", "E", "SE"];
+
 	// Blink rotation
 	blinkRot = (int(random(8)) * HALF_PI) / 2;
 
 	// Ani vel
-	imgposyvel = random(0.001, 0.004);
+	imgposyvel = -random(0.001, 0.004);
 
 	// Number of vortices
 	numVort = int(random(2, 6));
@@ -75,7 +82,6 @@ function setup() {
 		);
 		vectors.push(v);
 	}
-	push();
 
 	// Blink positions and frequency
 	for (let i = 0; i < 25; i++) {
@@ -121,6 +127,8 @@ function setup() {
 		);
 		blinkImg.push(img);
 	}
+
+	// Rotate
 	push();
 	rotateAll();
 	pop();
@@ -139,8 +147,8 @@ function setup() {
 	// Features --------------------------------
 	window.$fxhashFeatures = {
 		Abstraction: int(rand * 100) + "%",
-		"Border direction": rotAniFeature[idxRotAni],
-		"Border stability": int(map(imgposyvel, 0.001, 0.004, 1, 100)) + "%",
+		"Border direction": rotAniFeature[idxRotAni % 8],
+		"Border stability": int(map(imgposyvel, -0.001, -0.004, 1, 100)) + "%",
 		Dawn: int(map(dawn, 0, 255, 0, 100)) + "%",
 		"Connected border points": conectedColors,
 	};

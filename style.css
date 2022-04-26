@@ -61,6 +61,7 @@ body {
 		rgb(47, 47, 47) 0%,
 		rgba(0, 0, 0, 1) 100%
 	);
+	z-index: 999;
 }
 .overlay img {
 	object-fit: contain;
